@@ -1,0 +1,2 @@
+# NAND2TETRIS-
+This is a program where a user  builds a simple but modern computer from the ground up. For the hardware portion, I wanted to use verilog but I decided to just go with how the program is designed because they provide accurate test scripts and a simulator. I am looking forward to doing this program and I haven't been this excited in a long time. Detailed project descriptions are in the readme.
