@@ -20,9 +20,14 @@ CHIP Mux4Way16 {
     We have 4 16 bit input buses, we need to route one of these 16 bit
     binary numbers to the 16 bit output bus depending on the value of sel
     */
+    // send 16 bit input bus 'a' to output if sel[0] = sel[1] = 0
 
-     Mux16(a=a,b=b,sel=sel[0],out=q); 
-     Mux16(a=c,b=d,sel=sel[0],out=r);
-     Mux16(a=q,b=r,sel=sel[1],out=out);
+    // we need 3 16 bit MUX gates, a/b will be sent to one of the buses then c/d will be sent to a bus, then we will select which one of these two buses to route to final output bus
+    Mux16(a = a, b = b, sel = sel[0], out = w1); // routes a or b to one  w1 depending on sel[0]
+    Mux16(a = c, b = d, sel = sel[0], out = w2); // routes c or d to w2 depending on sel[0]
+    Mux16(a = w1, b = w2, sel = sel[1], out = out);
+
+    // case sel = 00: w1 = a w2 = c, w1 = a is then sent to final output bus because sel[1] = 0
+    // case sel = 01: w1 = b, w2 = d, w1 = b is then sent to final output bus because sel[1] = 0 the other sel values can be easily checked in a similar manner
 
 }
