@@ -1,0 +1,34 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Or.hdl
+
+ /**
+ * Or gate:
+ * out = 1 if (a == 1 or b == 1)
+ *       0 otherwise
+ */
+
+ /* Implementation:
+ OR chip uses 3 NAND gates total, I will just use the NOT gate
+ defined earlier vs using 3 NAND gates but these two options are equivalent
+ given how my modules are defined.
+ To figure out how to create an OR gate from Nand gates I had to learn demorgans law
+ I found that NOR(a,b) = not(a) AND not(b)
+ Which implies that OR(a,b) = NAND(not(a), not(b))
+ This is how this chip is implemented below
+ I believe that it would be more efficient to use a transistor made OR gate
+ vs using Nand gates but that isnt an option in the program :)
+ */
+
+CHIP Or {
+    IN a, b;
+    OUT out;
+
+    PARTS: // structural model 
+    Not(in = a, out = nota); // equivalent definition includes an Nand gate
+    Not(in = b, out = notb);
+    Nand(a = nota, b = notb, out = out);
+
+    // not a not b user defined within this module
+}

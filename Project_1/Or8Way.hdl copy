@@ -1,0 +1,34 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Or8Way.hdl
+
+/**
+ * 8-way Or:
+ * out = (in[0] or in[1] or ... or in[7])
+ */
+
+CHIP Or8Way {
+    IN in[8];
+    OUT out;
+
+    PARTS:
+    // Put your code here:
+    /* this multi input OR gate will be made with several 2 input OR gates,
+    there outputs will be wired together into other OR gates
+    This implementation is similar to my multiplexor implementation where i created
+    several multi input gates to express the MUX in long hand
+    */
+    Or(a = in[0], b = in[1], out = w1);
+    Or(a = in[1], b = w1, out = w2);
+    Or(a = in[2], b = w2, out = w3);
+    Or(a = in[3], b = w3, out = w4);
+    Or(a = in[4], b = w4, out = w5);
+    Or(a = in[5], b = w5, out = w6);
+    Or(a = in[6], b = w6, out = w7);
+    Or(a = in[7], b = w7, out = out);
+
+
+    // now the final out is dependent on all of the input bus values, if any of them is 1, then out = HIGH
+
+}

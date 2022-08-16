@@ -1,0 +1,45 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/And.hdl
+
+/**
+ * And gate:
+ * out = 1 if (a == 1 and b == 1)
+ *       0 otherwise
+ */
+
+ /* METHOD:
+
+   This can be implemented in two ways, First this can be implemented with strictly
+   primitive NAND gates that are built into the course. I will do this just for practice
+   in working with digital logic and universal gates.
+    However, the book states
+   that we can use the primitive gates and the gates that we have already developed.
+   At this point I have developed just the NOT gate with 1 NAND gate.
+   So the
+   AND function can be implemented by logically inverting the output of the NAND gate
+   with the NOT gate. This is equivalent to me using two NAND gates, because NOT is defined
+   as one NAND gate, and that is what
+   I will do here to get the practice stated above. In future projects, I will use
+   my user specified named chips like Not/And
+   */
+
+CHIP And {
+    IN a, b;
+    OUT out;
+
+    PARTS:
+     /* in the module instants, the LHS is the i/o port defined in seperate modules like Nand
+     the right hand side contains ports defined here and seperate user specified wires that
+     exist in this file */
+
+     // create an Nand gate defined elsewhere
+
+     Nand(a = a, b = b, out = Nandab); // Nandab is user defined wire, Nand(a,b) where a,b are internal inputs to this module
+     Nand(a = Nandab, b = Nandab, out = out); // equivalent to a Not gate defined elsewhere
+
+     // out 2nd NandModule = out And gate module
+
+
+} // end And chip module

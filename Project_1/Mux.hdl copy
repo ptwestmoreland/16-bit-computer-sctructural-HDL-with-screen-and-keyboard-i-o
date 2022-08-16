@@ -1,0 +1,53 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Mux.hdl
+
+/**
+ * Multiplexor:
+ * out = a if sel == 0
+ *       b otherwise
+ */
+
+CHIP Mux {
+    IN a, b, sel;
+    OUT out;
+
+    PARTS:
+
+    // code after reducing sum of products expression below and commented out
+
+    /*
+    Not(in = sel, out = notsel);
+    And(a = a, b = notsel, out = w1);
+    And(a = sel, b = b, out = w2);
+    Or(a = w1, b = w2, out = out);
+
+    */
+
+    // redoing it after testing with long form to get more practice with the Hardware language
+    // code without expression reduction
+    // the longhand code has 3 variable AND statements which is not defined so I will use 2 And gates to represent a 3 input And gate
+    // yes it would be easier to use above code or redefine a 3 input AND gate module but thats not in the spirit of practice or showing off ;)
+    Not(in = a, out = nota); // create a not gate
+    Not(in = b, out = notb);
+    Not(in = sel, out = notsel);
+    And(a = a, b = notb, out = threeinputandpt1);
+    And(a = notsel, b = threeinputandpt1, out = w1); // w1 used in final OR, statement creates 3 input And gate
+    And(a = a, b = b, out = threeinputandpt2);
+    And(a = notsel, b = threeinputandpt2, out = w2); // 2nd 3 input AND gate
+    And(a = nota, b = b, out = threeinputandpt3);
+    And(a = sel, b = threeinputandpt3, out = w3);
+    And(a = a, b = b, out = threeinputandpt4);
+    And(a = sel, b = threeinputandpt4, out = w4);
+
+    // now we need a four input OR gate for all of the above wires labeled w 1 - 4
+    // instead of creating a new module, I will repeat the above
+
+    Or(a = w1, b = w2, out = finalOr1);
+    Or(a = finalOr1, b = w3, out = finalOr2);
+    Or(a = w4, b = finalOr2, out = out);
+
+    // I prefer the more efficient solution, but this one required more tricks, gates, and thoughts
+
+}

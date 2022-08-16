@@ -1,0 +1,42 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Not.hdl
+
+/**
+ * Not gate:
+ * out = not in
+ */
+
+ /* EXPLANTATION OF METHOD:
+ constructed from one two input primitive NAND gate
+ if the two inputs are connected together, then the case on the
+ nand truth table where we have two different high/low inputs doesn't matter
+ leaving us with
+
+ x y  NAND(x,y)
+ 0 0   1
+ 1 1   0
+
+ but since x = y the truth table can be written as
+
+ x x NAND(x,x)
+ 0 0   1
+ 1 1   0
+
+ This is logically equivalent to a NOT gate:
+ x NOT(x)
+ 0   1
+ 1   0    */
+
+
+
+CHIP Not {
+    IN in; // defining input and output ports
+    OUT out;
+
+    PARTS: // structurally model the logic gate
+    // nand gate is already defined, has input pins a, b and output pin out
+    // set a, b = to this chips input pin in 
+    Nand(a = in, b = in, out = out);
+}

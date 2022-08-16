@@ -1,0 +1,22 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/DMux.hdl
+
+/**
+ * Demultiplexor:
+ * {a, b} = {in, 0} if sel == 0
+ *          {0, in} if sel == 1
+ */
+// this operation demultiplexes an input signal that was sent through a multiplexor
+CHIP DMux {
+    IN in, sel;
+    OUT a, b;
+    // one signal is rerouted to one of two possible outputs
+    PARTS:
+
+    Not(in = sel, out = notSel);
+    And(a = in, b = notSel, out = a); // one output defined here, output a, is taken care of with an AND gate
+    And(a = in, b = sel, out = b); // other is taken care of
+
+}
