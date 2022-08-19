@@ -1,0 +1,139 @@
+
+/**
+
+  FROM THE DEVELOPER:
+  wow doing this will really make you appreciate behavioral HDL languages, this is much more difficult. It is also, much more helpful
+  in understanding logic circuits and computers at their lowest level.
+
+ * The ALU (Arithmetic Logic Unit).
+ * Computes one of the following functions:
+ * x+y, x-y, y-x, 0, 1, -1, x, y, -x, -y, !x, !y,
+ * x+1, y+1, x-1, y-1, x&y, x|y on two 16-bit inputs,
+ * according to 6 input bits denoted zx,nx,zy,ny,f,no.
+ * In addition, the ALU computes two 1-bit outputs:
+ * if the ALU output == 0, zr is set to 1; otherwise zr is set to 0;
+ * if the ALU output < 0, ng is set to 1; otherwise ng is set to 0.
+ */
+
+// Implementation: the ALU logic manipulates the x and y inputs
+// and operates on the resulting values, as follows:
+// if (zx == 1) set x = 0        // 16-bit constant
+// if (nx == 1) set x = !x       // bitwise not
+// if (zy == 1) set y = 0        // 16-bit constant
+// if (ny == 1) set y = !y       // bitwise not
+// if (f == 1)  set out = x + y  // integer 2's complement addition
+// if (f == 0)  set out = x & y  // bitwise and
+// if (no == 1) set out = !out   // bitwise not
+// if (out == 0) set zr = 1
+// if (out < 0) set ng = 1
+
+CHIP ALU {
+    IN
+        x[16], y[16],  // 16-bit inputs
+        zx, // zero the x input?
+        nx, // negate the x input?
+        zy, // zero the y input?
+        ny, // negate the y input?
+        f,  // compute out = x + y (if 1) or x & y (if 0)
+        no; // negate the out output?
+
+    OUT
+        out[16], // 16-bit output
+        zr, // 1 if (out == 0), 0 otherwise
+        ng; // 1 if (out < 0),  0 otherwise
+
+    PARTS:
+   // first step is to set up the conditionals that will zero/negate the inputs
+   // order matters so I will focus on zx first (zero x when high)
+
+   //zx = 1 -> 16 bit input = 16'b00000000000000000, a MUX can make this selection
+   Mux16(a = x, b = false, sel = zx, out = w1); // when sel = zx = 0 x is passed through
+   // another less practical solution to the above would be to make zx 16 bits wide and invert it then send that and x through an AND gate
+
+   // now move onto up nx, when notx = 1, we negate the x input which is w1 described above
+
+   // invert w1 (x that went through MUX above)
+
+   Not16(in = w1, out = notw1);
+   // now select between w1 and notw1 depending on nx control bit
+
+   Mux16(a = w1, b = notw1, sel = nx, out = w2); // wire 2 now stores x input after potentially being zerod/inverted
+
+   // repeat the above for the y[16] input
+
+   // first I'll attend to zy case
+
+   Mux16(a = y, b = false, sel = zy, out = w3); // wire 3 stores either y[16] (if zy = 0) or 16'b0000000...0 if zy = 1
+
+   // negate the above value
+
+   Not16(in = w3, out = notw3); // w3 stores 16'b11111111111111 or Not(y[16])
+
+   // now select between y[16] or the negated y[16]
+
+   Mux16(a = w3, b = notw3, sel = ny, out = w4);
+
+   // next control bit is f, which gives the function.
+
+   /* if f = 1, we need to add the x[16], y[16] inputs given above.
+   if f = 0 we bitwise and them. by y/x I am referring to the potential zeroed
+   and negated versions of them that we created above, not the stand alone inputs */
+
+   // create an added version of the two 16 bit buses
+
+ // a and b are 16 bit buses in the 16 bit adder, well set a = x[16] (altered version of it) which is defined by w/wire2 , b will be w4/y[16]. Both are 16 bits wide
+
+   Add16(a = w2, b = w4, out = xPlusy);
+
+   // now AND the two altered inputs x[16], y[16]
+
+   And16(a = w2, b = w4, out = xAndy);
+
+   // now send one of these two to another wire depending on f control bit, MUX16 is used to implement the conditional
+
+   Mux16(a = xAndy, b = xPlusy, sel = f, out = out1); // when f = 0 we pass x&y else we pass x + y to out
+
+   // at this point out1 = x&y OR x + y, from here we need to either send out1 to out[16], or negate it and send !out1 to out[16], this is based on the no control bit
+
+   Not16(in = out1, out = notout1); // create an inverted out1 in case we need to send it to the final output, out[16]
+
+   // select between the two with a 16 bit multiplexor as done above
+   // when sel = no = 0 we need to send out1 to out, else send notout1 to out[16]
+
+   Mux16(a = out1, b = notout1, sel = no, out = out, out[0..7] = zr1, out[8..15] = zrsec, out[15] = ng); // now out stores the result of the logical/Arithmetic operations performed on input buses x[16] y[16]
+
+   Or8Way(in = zr1, out = or1);
+   Or8Way(in = zrsec, out = or2); // for an explanation over how these 4 blocks work, read below. It is described in detail.
+   Or(a = or2, b = or1, out = w5);
+   Not(in = w5, out = zr);
+
+
+/*
+ I'm keeping this portion below because the comments describe the logic
+
+  below was my original solution it doesn't work for the HDL due to internal issues, so im redoing this part with the above Mux,
+    pretty sure this would work in real life though
+    the above code, that works,  is pretty much the same thing, just stated differently
+
+    the last thing that is required is to set the flags, if out is = 16'b0000..0 then the zr output should be high
+
+    we need to send out[16] to a 16 bit or gate that has one output, this was created in project one and it is the Or8Way.hdl file
+
+ below doesn't work for the HDL due to syntax issues, redoing this part with the above Mux, pretty sure this would work in real life though
+
+
+   Or8Way(in = out[0..7], out = or1); // split out[16] into two 8 bit sections
+   Or8Way(in = out[8..15], out = or2);  // now connect or1 and or2 with a 2 input OR gate
+   Or(a = or1, b = or2, out = w5); // if any of the bits in out[16] are high (i.e out != 0), w4 = 1. We need output zr to be the opposite of this.
+
+   Not(in = w5, out = zr); // now the output zr is set to opposite of above. If out[16] = 0 then zr = 1
+
+    now ng must be set, if out is less than zero, then ng = 1
+
+    if the most sig bit is 1, then we are dealing with a negative number.
+
+   And(a = out[15], b = true, out = ng); // now if out[15] = 1 then ng = 1 and if out[15] = 0, ng = 0
+
+  */
+
+}

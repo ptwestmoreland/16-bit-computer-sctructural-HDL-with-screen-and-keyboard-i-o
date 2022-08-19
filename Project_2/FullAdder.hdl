@@ -1,0 +1,57 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/FullAdder.hdl
+
+/**
+ * Computes the sum of three bits.
+ */
+
+CHIP FullAdder {
+    IN a, b, c;  // 1-bit inputs
+    OUT sum,     // Right bit of a + b + c
+        carry;   // Left bit of a + b + c
+
+    PARTS:
+    /*
+    Allow me to preface this by saying that I am sure that there is a way
+    to perform this function with less gates.
+     I however am not all that familiar
+    with boolean algebra and reduction (took one digital electronics class
+    with a terrible instructor 3 years ago) so I simplified it as much as
+    I could with what I remember and stopped there because I didn't want to mess this up
+    and I also don't have a lot of time today to complete the project.
+     I also didn't
+    want to cheat and use a schematic or a logic synthesizor because that is
+    not in the spirit of the project.
+
+    Logic specifications: C = Cin
+    carry_out = carry = Cin*(a XOR b) +/OR (a*b)
+    sum = (Not(Cin)*(a XOR b)) OR/+ (Cin*(Not(a)*Not(b) R a*b))
+
+    Symbolically: (hopefully less confusing)
+
+    carry = (Cin*(a x+ b)) + (a*b)
+    sum = (~Cin * (a x+ b)) + (Cin * (~a*~b + a*b))
+
+    all test cases passed 
+
+    */
+
+    Xor(a = a, b = b, out = w1);
+    And(a = c, b = w1, out =carryoutw1);
+    And(a = a, b = b, out = carryoutw2);
+    Or(a = carryoutw1, b = carryoutw2, out = carry); // carry_out logic is done above
+    // sum logic
+    Not(in = c, out = notc); // invert carry in
+    // a xor b is w1
+    And(a = notc, b = w1, out = sumoutw1);
+    Not(in = a, out = nota);
+    Not(in = b, out = notb);
+    // carryoutw2 = A and B
+    And(a = nota, b = notb, out = intmwire);
+    Or(a = intmwire, b = carryoutw2, out = intmwire2); // carryoutw2 = A and B
+    And(a = c, b = intmwire2, out = sumoutw2);
+    Or(a = sumoutw1, b = sumoutw2, out = sum);
+
+}
