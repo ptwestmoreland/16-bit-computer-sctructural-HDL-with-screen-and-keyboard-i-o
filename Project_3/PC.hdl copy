@@ -1,0 +1,46 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/PC.hdl
+
+/**
+ * A 16-bit counter with load and reset control bits.
+ * if      (reset[t] == 1) out[t+1] = 0
+ * else if (load[t] == 1)  out[t+1] = in[t]
+ * else if (inc[t] == 1)   out[t+1] = out[t] + 1  (integer addition)
+ * else                    out[t+1] = out[t]
+ */
+
+CHIP PC {
+    IN in[16],load, inc, reset;
+    OUT out[16];
+
+    PARTS:
+    // We need a 16 bit register that can retain and increment its value
+    // further the register needs to have a reset that can set its value to 16'b00....0
+    // it also needs to be able to load a new value for instructions that require jumping to another point
+   // 3 control bits and combinational logic keep counter in correct mode
+
+   // create the register and increment value stored in it
+
+   Register(in = rstOut, load = true, out = out, out = regOut); // load will always be true because register will update with either retained, incremented, or new value
+   Inc16(in = regOut, out = w1); // increment value in register for each clock cycle, this may or may not be used
+   // we will wire 3 muxes in series. Reset selecting mux is the most important. If you are reading this for help, draw a diagram of the register with the reset mux feeding it and then work backwards on the other two muxes from there
+
+    // first create a MUX that chooses between the previous or incremented value based on inc input
+
+    Mux16(a = regOut, b = w1, sel = inc, out = w2); // w2 stores previous value or incremented version of it
+
+    // now we use a mux to choose between the above or a new input in[16] based on load control bit
+
+    Mux16(a = w2, b = in, sel = load, out = w3);
+
+    // finally choose between the above or a constant 0 based on reset. This feeds the counter register
+
+    Mux16(a = w3, b = false, sel = reset, out = rstOut);
+
+    /* Note: registers load value is always one. This can be done because the previous value, unadjusted, may be loaded into the register on the next clock edge
+    if the selector bits allow it. This means that to store a previous value we dont have to feed out(t - 1) back to a mux that chooses between a new value
+    and the previous one. This is done with the other logic  */
+
+}

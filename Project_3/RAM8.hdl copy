@@ -1,0 +1,58 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/RAM8.hdl
+
+/**
+ * Memory of 8 registers, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then
+ * the in value is loaded into the memory location specified by address
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM8 {
+    IN in[16], load, address[3];
+    OUT out[16];
+
+    PARTS:
+    /*
+    we are creating a memory bank of 8 16 bit registers, these registers should be accessible by their address through
+    combinational logic. We need to be able to read and write to these memory units. The out output should display the value
+    stored in which ever register our address is focused on
+     */
+
+     // each register represents a 16 bit binary number or a 16 bit "word" (although this is really a half word in modern computers), these will be instruction memory and data memory units
+
+     // with 3 address bits we can create 8 different addresses for each 16 bit register from 000 = 0 to 111 = 7 or in the general case 0 to n - 1, where n is the size of the register bank
+
+     /* Logic and goal:
+        We need 8 16 bit registers forming a bank. Further, we need the ability to route the input value in to just one of those registers on a load operation.
+        In addition, we need to be able to route the 8 possible output values (those stored in the 8 registers) to the single 16 bit output bus referred to as
+        out[16]. This can be accomplished with an 8 way MUX and 8 way demux
+      */
+
+      // create the 8 registers and other components
+
+    // (not valid, DMux8Way has one input bit that is 1 bit wide)  DMux8Way(in = in, sel = address, a = regA, b = regB, c = regC, d = regD, e = regE, f = regF, g = regG, h =, regH); // routes one input to an output
+
+     DMux8Way(in = load, sel = address, a = A, b = B, c = C, d = D, e = E, f = F, g = G, h = H); // routes one input to an output
+
+     // now when address = 000, load/A is routed to the first register, in is then stored in that register
+
+      Register(in = in ,load = A, out = regA ); // address 000
+      Register(in = in, load = B, out = regB);
+      Register(in = in, load = C, out = regC); // .....
+      Register(in = in, load = D, out = regD);
+      Register(in = in, load = E, out = regE);
+      Register(in = in, load = F, out = regF);
+      Register(in = in, load = G, out = regG);
+      Register(in = in, load = H, out = regH); // address 111
+
+      // in is sent to each register, if load isn't high, and it can only be high for 1 register and 0 for all others, then the register can't be updated. So we can select and update at most one register in the bank
+
+
+      // when address is 000 a/regA is routed to the output and it appears there
+
+     Mux8Way16(a = regA, b = regB, c = regC, d = regD, e = regE, f = regF, g = regG, h = regH, sel = address, out = out); // routes one input
+
+}

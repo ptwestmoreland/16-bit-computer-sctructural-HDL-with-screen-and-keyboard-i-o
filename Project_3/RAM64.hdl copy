@@ -1,0 +1,38 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/RAM64.hdl
+
+/**
+ * Memory of 64 registers, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then
+ * the in value is loaded into the memory location specified by address
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM64 {
+    IN in[16], load, address[6];
+    OUT out[16];
+ // 6 address bits used to assign each of the 64 registers an identification from 000000 to 111111 (0-63)
+ // we can carve this out with 8 Ram8 Modules, each one contains an 8 register memory bank
+ // our register size, n, needs to be a power of 2 because we need log2(n) controls bits, which must be a whole number
+
+    PARTS:
+
+    // we need to route one input in to one of 64 registers listed below
+    DMux8Way(in = load, sel = address[3..5], a = A , b = B, c = C, d = D, e = E, f = F, g = G, h = H);
+    // create a total of 64 registers through 8 register memory banks
+    RAM8(in = in , load = A, address = address[0..2], out = memA);
+    RAM8(in = in , load = B, address = address[0..2], out = memB);
+    RAM8(in = in , load = C, address = address[0..2], out = memC);
+    RAM8(in = in , load = D, address = address[0..2], out = memD);
+    RAM8(in = in , load = E, address = address[0..2], out = memE);
+    RAM8(in = in , load = F, address = address[0..2], out = memF);
+    RAM8(in = in , load = G, address = address[0..2], out = memG);
+    RAM8(in = in , load = H, address = address[0..2], out = memH);
+   //now route one of these to output
+
+    Mux8Way16(a = memA, b = memB, c = memC, d = memD, e = memE, f = memF, g = memG, h = memH, sel = address[3..5], out = out);
+
+
+}
