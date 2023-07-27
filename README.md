@@ -14,12 +14,12 @@ Contains the addition logic and a structurally described ALU
 
 Project 3: 
 
-Contains the RAM units and program counter. 
+Contains the d flip flop, registers, RAM units and program counter. 
 
 Project 4: 
 
-Contains assembly language programs to fill screen and multiply numbers. This multiplication implementation is not effcient but my ALU can't shift. 
+Contains assembly language programs to fill screen with black when any key is pressed and to multiply two numbers in a register. This multiplication implementation is not effcient but my ALU can't shift. 
 
 Project 5: 
 
-Contains the CPU, final data memory, instruction memory, and a computer module.
+Contains the CPU, final data memory(includes screen and keyboard memory map) , instruction memory, and a computer module.
