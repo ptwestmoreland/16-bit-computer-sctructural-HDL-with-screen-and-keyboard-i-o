@@ -1,0 +1,112 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input
+ * holds the value of this location. If the current instruction needs
+ * to write a value to M, the value is placed in outM, the address
+ * of the target location is placed in the addressM output, and the
+ * writeM control bit is asserted. (When writeM==0, any value may
+ * appear in outM). The outM and writeM outputs are combinational:
+ * they are affected instantaneously by the execution of the current
+ * instruction. The addressM and pc outputs are clocked: although they
+ * are affected by the execution of the current instruction, they commit
+ * to their new values only in the next time step. If reset==1 then the
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather
+ * than to the address resulting from executing the current instruction.
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M?
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    // Put your code here:
+
+    // Decide between A or C type instr and load register A with instr mem address or ALU output based on control
+
+
+    Or(a = instruction[15], b = false, out = actype); // out is high for c type low for address type
+
+    And(a = instruction[5], b = actype, out = SelectALUOutVsInstruc); // load A register with memory address or alu output for a C type instruction that stores result in A register, decided by instr[5]
+    // code below will store the instruction (a mem address) in A register for A type instructions or an ALU result for C type instruction with a result destination of the A register
+    Mux16(a = instruction[0..15], b = ALUout, sel = SelectALUOutVsInstruc, out = ARegValue); // sel = 0 -> Areg = instruction else load with ALU result
+
+    // now create the A register, it should hold a 16 bit val and only load for A type or C type with instr[5] = 1
+
+    Not(in = instruction[15], out = w1); // high for A type instr low for C type
+
+    Or(a = w1, b = instruction[5], out = loadRegA); // out is high for A type and high for C type where instr[5] = high low elsewhere, use it to load register
+
+    ARegister(in = ARegValue, load = loadRegA, out = ARegContents); // register will load for A type instr or conditionally ALUOUT for C type
+
+    // now set up D register which is an ALU input and a potential destination for ALU output based on control bits encoded in instruction
+
+    And(a = instruction[4], b = instruction[15], out = loadRegD);
+    DRegister(in = ALUout, load = loadRegD, out = DRegContents); // can load D reg with ALU result on next clk cycle if C type instruction with correct destination field
+
+    // as implied above the A/D register can both load the ALU result on next cycle with an assembly instruction such as AD = D + M
+    // A reg can hold instruction/data mem address, constant, or ALU result
+    // select between feeding A register or data memory location value (inM) to ALU with D register on other input
+
+    Mux16(a = ARegContents, b = inM, sel = instruction[12], out = AMToALU); // sends Data mem word or constant A register contents to ALU as operand based on 'a' bit in a given C type instruction
+
+    // above will send an operand to ALU on A type instructions but ALU will not affect it or compute
+    // AlU operates on memory word or CPU register contents, operation is chosen by compute field of instruction
+
+    ALU(x = DRegContents, y = AMToALU, zx = instruction[11], nx = instruction[10],
+    zy = instruction[9], ny = instruction[8], f = instruction[7], no = instruction[6],
+    out = ALUout, zr = ALURsltIsZero, ng = ALURsltIsNegative);
+
+    // now handle memory writes
+
+    // data memory writing occurs for a C type instruction like M = D, where D register from last instr is written to memory
+    // first we assume that the A register holds the 15 bit address that we write to for instance @15 then M = D
+
+    // we need the first 15 bits of the A register and a 0 on the 16th bit
+
+    Or16(a = false, b = ARegContents, out[0..14] = addressM); // first 15 bits of A register are address of write @2 , M = D
+
+    // now define mem value that we are writing (CPU output outM)
+
+    And16(a = true, b = ALUout, out = outM); //  all of this makes it possible to write to memory
+
+    // we only write to memory for a C type instruction where the 3rd least sig bit of instruction is high
+    // set writeM output based on if a data memory write occurs
+
+    And(a = instruction[15], b = instruction[3], out = writeM);
+
+    // now handle jumps and next instruction
+
+    // Program counter should be loaded with current instruction and should be able to load a new address from the A register to jump to or increment
+
+    And(a = ALURsltIsZero, b = instruction[1], out = JEQ); // jump when jump bit for == 0 is high and ALU output is zero
+    And(a = ALURsltIsNegative, b = instruction[2], out = JLT); // jump when result of prev computation is negative
+    Or(a = ALURsltIsZero, b = ALURsltIsNegative, out = zeroOrNeg);
+    Not(in = zeroOrNeg, out = positiveResult);
+    And(a = positiveResult, b = instruction[0], out = JGT); // jump when ALU result is + greater than 0 and jump field is set
+    Or(a = JEQ, b = JLT, out = JLE); // jump when result is less than or equal to 0
+    Or(a = JLE, b = JGT, out = JMPA);
+    And(a = instruction[15], b = JMPA, out = loadPC); // load PC
+    Not(in = loadPC, out = PCinc); // increment when load PC = 0
+    PC(in = ARegContents, inc = PCinc, load = loadPC, reset = reset, out[0..14] = pc);
+
+}
